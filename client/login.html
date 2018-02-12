@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  </head>
+  <body>
+      
+        <div class="container">
+                <div class="card card-container">
+                    <!-- <img class="profile-img-card" src="//lh3.googleusercontent.com/-6V8xOA6M7BA/AAAAAAAAAAI/AAAAAAAAAAA/rzlHcD0KYwo/photo.jpg?sz=120" alt="" /> -->
+                    <img id="profile-img" class="profile-img-card" src="http://ssl.gstatic.com/accounts/ui/avatar_2x.png" />
+                    <p id="profile-name" class="profile-name-card"></p>
+                    <form id="frmSignIn" class="form-signin">
+                        <span id="reauth-email" class="reauth-email"></span>
+                        <input name="txtEmail" type="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
+                        <input name="txtPassword" type="password" id="inputPassword" class="form-control" placeholder="Password" required>
+                        <div id="remember" class="checkbox">
+                            <label>
+                                <input type="checkbox" value="remember-me"> Remember me
+                            </label>
+                        </div>
+                        <button id="btnSignIn" class="btn btn-lg btn-primary btn-block btn-signin" type="submit">Sign in</button>
+                        <div id="errorDiv" style="color:red"></div>
+                        <div style="padding-left:25%">
+                            <div id="time" class="numberCircle" style="display:none"></div>
+                        </div>
+                    </form><!-- /form -->
+
+                    <a href="/create-account" class="forgot-password">
+                        Create a new user!
+                    </a>
+                </div><!-- /card-container -->
+            </div><!-- /container -->
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script>
+    $(document).ready(function(){
+        $('#frmSignIn').submit(function(event){
+            event.preventDefault();
+            $('#errorDiv').text('');
+            $('#time').text('');
+
+            var userForm = $("#frmSignIn").serialize();
+            $.ajax({
+                type: 'post',
+                url: 'api/verify-user',
+                data: userForm,
+                success : function(data) {
+                    if(data.success) {
+                        console.log(data)
+                        console.log('successfully login');
+                        $(location).attr('href', '/')
+                    }
+                    else {
+                        if(data.secs) {
+                            $('#errorDiv').prepend("The user has temporary been locked. Please wait for the counter and try again");
+                            $('#time').text(data.secs);
+                            $('#time').show();
+                            $('#btnSignIn').prop('disabled', true);
+                            //$('#errorDiv').text("The user has temporary been locked. Please wait  seconds and try again")
+                            var runInterval = setInterval(function() {
+                                if(data.secs == 0) {
+                                    $('#btnSignIn').prop('disabled', false);
+                                    $('#time').hide();
+                                    $('#errorDiv').text('');
+                                    clearInterval(runInterval)
+                                }
+                                $('#time').text(data.secs--);
+                            }, 1000)
+                        }
+                        else {
+                            console.log("error");
+                            $('#errorDiv').text("Wrong email or password. Please try again.")
+                        }
+                    }
+                }
+            }); 
+        });
+    });
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  </head>
+  <body>
+
+        <div class="container">
+                <div class="card card-container">
+                    <!-- <img class="profile-img-card" src="//lh3.googleusercontent.com/-6V8xOA6M7BA/AAAAAAAAAAI/AAAAAAAAAAA/rzlHcD0KYwo/photo.jpg?sz=120" alt="" /> -->
+                    <!--<img id="profile-img" class="profile-img-card" src="http://ssl.gstatic.com/accounts/ui/avatar_2x.png" />-->
+                    <h2>Create Account</h2>
+                    <p id="profile-name" class="profile-name-card"></p>
+                    <form id="frmCreateUser" class="form-signin">
+                        <span id="reauth-email" class="reauth-email"></span>
+                        <input name="txtFirstName" type="text" id="inputFirstName" class="form-control" placeholder="First Name" required autofocus>
+                        <input name="txtLastName" type="text" id="inputLastName" class="form-control" placeholder="Last Name" required>
+                        <input name="txtEmail" type="email" id="inputEmail" class="form-control" placeholder="Email address" required>
+                        <input name="txtPassword" type="password" id="inputPassword" class="form-control" placeholder="Password" required>
+                        <button id="btnSignIn" class="btn btn-lg btn-primary btn-block btn-signin" type="submit">Create Account</button>
+                    </form><!-- /form -->
+                    <div id="errorDiv" style="color:red"></div>
+                </div><!-- /card-container -->
+            </div><!-- /container -->
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="jquery.min.js"></script>
+   <!--<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>-->
+    <!--<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.7/jquery.validate.min.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script>
+        $('#btnSignIn').click(function(){
+            $('#errorDiv').text("");
+        })
+    $(document).ready(function(){
+        $('#frmCreateUser').submit(function(event){
+            event.preventDefault();
+            console.log("here ");
+            var userForm = $("#frmCreateUser").serialize();
+            $.ajax({
+                type: 'post',
+                url: 'api/create-user',
+                data: userForm,
+                success : function(data) {
+                    if(data) {
+                        console.log('successfully created');
+                        $(location).attr('href', '/')
+                    }
+                    else {
+                        console.log("error");
+                        $('#errorDiv').text("There is allready an account signed up with this email.... Please, use another")
+                    }
+                }
+            }); 
+        });
+    });
+
+    </script>
+  </body>
+</html>
