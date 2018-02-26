@@ -10,6 +10,11 @@ var port = 3000
 
 var connection = require('./db.js')
 var middleware = require('./middleware.js')
+var encrypt = require('./hashing')
+
+console.log(encrypt.createUniqueString())
+console.log(encrypt.createUniqueString())
+console.log(encrypt.createUniqueString())
 
 
 app.use(express.static('./client/assets'))
@@ -118,51 +123,51 @@ app.post('/api/verify-user', (req, res) => {
                 }
 
                 /*******************************/
-                if (result[0].password == password) {
-                    req.session.userId = result[0].userId
-                    res.send({
-                        "success": true
-                    })
-
-                    var sqlQueryHistory = `insert into LoginHistory (userId, date, verified) 
-                                       values (${selectedUserId}, "${dateTime}", 1)`
-
-                    connection.query(sqlQueryHistory, (err, result) => {
-                        if (err) {
-                            console.log(err)
-                            console.log("be aware, the history was not inserted.. fix this bug immidiately")
-                        } else {
-                            console.log("inserted history")
-                        }
-                    })
-
-                } else {
-
-                    var sqlQueryHistory = `insert into LoginHistory (userId, date, verified) 
-                                       values (${selectedUserId}, "${dateTime}", 0)`
-                    connection.query(sqlQueryHistory, (err, result) => {
-                        if (err) {
-                            console.log(err)
-                            console.log("be aware, the history was not inserted.. fix this bug immidiately")
-                        } else {
-                            console.log("inserted history")
-                            if (lockResult.length == 2) {
-                                var secs = countSeconds(lockResult[1].date);
+                encrypt.comparePassword(password+result[0].salt, result[0].password, (err, match) => {
+                    if(match){
+                        console.log("hash matched")
+                        req.session.userId = result[0].userId
+                        res.send({
+                            "success": true
+                        })
+    
+                        var sqlQueryHistory = `insert into LoginHistory (userId, date, verified) 
+                                           values (${selectedUserId}, "${dateTime}", 1)`
+    
+                        connection.query(sqlQueryHistory, (err, result) => {
+                            if (err) {
+                                console.log(err)
+                                console.log("be aware, the history was not inserted.. fix this bug immidiately")
+                            } else {
+                                console.log("inserted history")
+                            }
+                        })
+                    }
+                    else {
+                        var sqlQueryHistory = `insert into LoginHistory (userId, date, verified) 
+                        values (${selectedUserId}, "${dateTime}", 0)`
+                        connection.query(sqlQueryHistory, (err, result) => {
+                            if (err) {
+                                console.log(err)
+                                console.log("be aware, the history was not inserted.. fix this bug immidiately")
+                            } else {
+                                console.log("inserted history")
+                                if (lockResult.length == 2) {
+                                    var secs = countSeconds(lockResult[1].date);
+                                    res.send({
+                                        "success": false,
+                                        secs
+                                    })
+                                    return
+                                }
                                 res.send({
-                                    "success": false,
-                                    secs
+                                    "success": false
                                 })
                                 return
-                            }
-                            res.send({
-                                "success": false
+                                }
                             })
-                            return
                         }
                     })
-
-
-                }
             })
         } else {
             res.send({
@@ -180,20 +185,28 @@ app.post('/api/create-user', (req, res) => {
     var userLastName = req.body.txtLastName
     var userEmail = req.body.txtEmail.toLowerCase()
     var userPassword = req.body.txtPassword
+    var r_salt = encrypt.createUniqueString()
 
-    console.log(userFirstName, userLastName, userEmail, userPassword)
-    var sqlQuery = `insert into Users (firstName, lastName, email, password) 
-                    values ("${userFirstName}", "${userLastName}", "${userEmail}", "${userPassword}" )`
-
-    connection.query(sqlQuery, (err, result) => {
-        if (err) {
+    encrypt.cryptPassword(userPassword, r_salt, (err, h_password) => {
+        if(err) {
+            console.log(err)
             res.send(false)
-            console.log('There was an error inserting ')
-            return;
+            return
         }
-        req.session.userId = result.insertId;
-        res.send(true)
+        var sqlQuery = `insert into Users (firstName, lastName, email, password, salt) 
+                        values ("${userFirstName}", "${userLastName}", "${userEmail}", "${h_password}", "${r_salt}" )`
+    
+        connection.query(sqlQuery, (err, result) => {
+            if (err) {
+                res.send(false)
+                console.log('There was an error inserting ')
+                return;
+            }
+            req.session.userId = result.insertId;
+            res.send(true)
+        })
     })
+
 })
 
 app.get('/api/logout', (req, res, next) => {
